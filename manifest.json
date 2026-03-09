@@ -1,0 +1,9 @@
+{
+	"id": "entry-timestamp",
+	"name": "Entry Timestamp",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.7",
+	"description": "Auto-timestamps task entries on Enter and provides an obsidian:// URI handler for adding entries from external tools.",
+	"author": "Darren Kuro",
+	"isDesktopOnly": false
+}
