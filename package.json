@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-entry-timestamp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Auto-timestamps task entries and provides URI handler for external entry creation",
 	"main": "main.js",
 	"scripts": {

@@ -46,6 +46,8 @@ const getOrCreateFile = async (app: App, path: string): Promise<TFile> => {
 };
 
 export default class EntryTimestampPlugin extends Plugin {
+	private processing = false;
+
 	onload(): void {
 		this.registerEvent(
 			this.app.workspace.on(
@@ -61,6 +63,7 @@ export default class EntryTimestampPlugin extends Plugin {
 	}
 
 	private onEditorChange(editor: Editor, _info: MarkdownFileInfo): void {
+		if (this.processing) return;
 		if (!editor.hasFocus()) return;
 
 		const cursor = editor.getCursor();
@@ -74,24 +77,36 @@ export default class EntryTimestampPlugin extends Plugin {
 		if (!match) return;
 
 		const statusChar = match[1];
+		const needsTimestamp = !prevLine.includes(CREATED_FIELD);
+		const needsStatusCopy = statusChar !== " ";
 
-		const prevReplacement = prevLine.includes(CREATED_FIELD)
-			? prevLine
-			: `${prevLine} [created:: ${timestamp()}]`;
+		if (!needsTimestamp && !needsStatusCopy) return;
 
+		const prevReplacement = needsTimestamp
+			? `${prevLine} [created:: ${timestamp()}]`
+			: prevLine;
 		const newLine = `- [${statusChar}] `;
 
-		editor.transaction({
-			changes: [
-				{
-					from: { line: lineNum - 1, ch: 0 },
-					to: { line: lineNum, ch: line.length },
-					text: `${prevReplacement}\n${newLine}`,
-				},
-			],
-		});
+		this.processing = true;
+		queueMicrotask(() => {
+			try {
+				if (editor.getLine(lineNum) !== EMPTY_TASK) return;
 
-		editor.setCursor({ line: lineNum, ch: 6 });
+				editor.transaction({
+					changes: [
+						{
+							from: { line: lineNum - 1, ch: 0 },
+							to: { line: lineNum, ch: EMPTY_TASK.length },
+							text: `${prevReplacement}\n${newLine}`,
+						},
+					],
+				});
+
+				editor.setCursor({ line: lineNum, ch: newLine.length });
+			} finally {
+				this.processing = false;
+			}
+		});
 	}
 
 	private async onProtocolAction(
