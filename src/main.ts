@@ -8,8 +8,7 @@ import {
 	TFile,
 } from "obsidian";
 
-const TASK_PATTERN = /^- \[(.)] /;
-const EMPTY_TASK = "- [ ] ";
+const TASK_PATTERN = /^(\s*)- \[(.)] /;
 const CREATED_FIELD = "[created::";
 const DEFAULT_DATE_FORMAT = "YYYY-MM-DD";
 const DEFAULT_STATUS = "!";
@@ -70,13 +69,17 @@ export default class EntryTimestampPlugin extends Plugin {
 		const lineNum = cursor.line;
 		const line = editor.getLine(lineNum);
 
-		if (line !== EMPTY_TASK || lineNum === 0) return;
+		if (lineNum === 0) return;
 
 		const prevLine = editor.getLine(lineNum - 1);
 		const match = prevLine.match(TASK_PATTERN);
 		if (!match) return;
 
-		const statusChar = match[1];
+		const indent = match[1];
+		const emptyTask = `${indent}- [ ] `;
+		if (line !== emptyTask) return;
+
+		const statusChar = match[2];
 		const needsTimestamp = !prevLine.includes(CREATED_FIELD);
 		const needsStatusCopy = statusChar !== " ";
 
@@ -85,18 +88,18 @@ export default class EntryTimestampPlugin extends Plugin {
 		const prevReplacement = needsTimestamp
 			? `${prevLine} [created:: ${timestamp()}]`
 			: prevLine;
-		const newLine = `- [${statusChar}] `;
+		const newLine = `${indent}- [${statusChar}] `;
 
 		this.processing = true;
 		queueMicrotask(() => {
 			try {
-				if (editor.getLine(lineNum) !== EMPTY_TASK) return;
+				if (editor.getLine(lineNum) !== emptyTask) return;
 
 				editor.transaction({
 					changes: [
 						{
 							from: { line: lineNum - 1, ch: 0 },
-							to: { line: lineNum, ch: EMPTY_TASK.length },
+							to: { line: lineNum, ch: emptyTask.length },
 							text: `${prevReplacement}\n${newLine}`,
 						},
 					],
