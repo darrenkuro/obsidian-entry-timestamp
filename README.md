@@ -6,6 +6,8 @@
 
 > Obsidian plugin that auto-timestamps task entries and provides a URI handler for adding entries from external tools.
 
+> **Note:** This plugin is built for personal use. I'm unlikely to accept pull requests or feature requests.
+
 ---
 
 ## Overview
